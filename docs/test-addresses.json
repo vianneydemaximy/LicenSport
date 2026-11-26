@@ -1,0 +1,26 @@
+{
+  "network": "XRPL Testnet",
+  "note": "Adresses publiques de test.",
+  "accounts": {
+    "federation": {
+      "address": "raTf3i2jq28R4D9oJXVAMo2gG9WXqJvtup",
+      "explorer": "https://testnet.xrpl.org/accounts/raTf3i2jq28R4D9oJXVAMo2gG9WXqJvtup"
+    },
+    "clubA": {
+      "address": "rLbSjF3sc2UZf1DL3G4Nf5bTHMR3rEb8tY",
+      "explorer": "https://testnet.xrpl.org/accounts/rLbSjF3sc2UZf1DL3G4Nf5bTHMR3rEb8tY"
+    },
+    "clubB": {
+      "address": "rBCxDUmPo4vuFYCwrsPx5xbwPnw6CT1e5a",
+      "explorer": "https://testnet.xrpl.org/accounts/rBCxDUmPo4vuFYCwrsPx5xbwPnw6CT1e5a"
+    },
+    "athlete1": {
+      "address": "rMCLSRGnGYBs7djdQhemM5mzFeXdHJnjZR",
+      "explorer": "https://testnet.xrpl.org/accounts/rMCLSRGnGYBs7djdQhemM5mzFeXdHJnjZR"
+    },
+    "athlete2": {
+      "address": "rs69qe1YaUwYWb76zfEQGFLf8dAxADXJrL",
+      "explorer": "https://testnet.xrpl.org/accounts/rs69qe1YaUwYWb76zfEQGFLf8dAxADXJrL"
+    }
+  }
+}
