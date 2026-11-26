@@ -9,15 +9,17 @@
  * En production : wallet non déposé (Xaman) pour le sportif, multisignature pour la fédération.
  */
 const express = require("express");
-const { CREDENTIAL_TYPES, SEASON_END_ISO, loadWallets, fromRippleTime } = require("../lib/config");
+const { CREDENTIAL_TYPES, SEASON_END_ISO, CLUB_LABELS, loadWallets, fromRippleTime } = require("../lib/config");
 const { issue, accept, revoke, getCredential, verify } = require("../lib/credentials");
 const { recordForRole, listAthletes } = require("../lib/offchain");
+const requests = require("../lib/requests");
 
 const { CLUB_MEMBER, LICENCE } = CREDENTIAL_TYPES;
 const LSF_ACCEPTED = 0x00010000;
 const CLUBS = ["clubA", "clubB"];
 const MOTIFS = ["SUSP_DISCIPLINE", "SUSP_ADMINISTRATIVE"]; // jamais de motif médical sur la chaîne
 const SEASON = "2026-2027";
+const clubLabel = (role) => CLUB_LABELS[role] || role;
 const LOCAL = ["127.0.0.1", "::1", "::ffff:127.0.0.1"];
 
 class HttpError extends Error {
@@ -34,7 +36,7 @@ function friendly(e) {
   return e.message;
 }
 
-function createAdminRouter(getClient) {
+function createAdminRouter(getClient, onChange = () => {}) {
   const wallets = loadWallets();
   const athleteRoles = listAthletes().map((a) => a.role);
   const router = express.Router();
@@ -69,6 +71,7 @@ function createAdminRouter(getClient) {
   const route = (handler) => async (req, res) => {
     try {
       const out = await serialize(async () => handler(await getClient(), req.body || {}));
+      onChange();
       res.json({ ok: true, ...out });
     } catch (e) {
       res.status(e.status || 400).json({ error: friendly(e) });
@@ -97,12 +100,36 @@ function createAdminRouter(getClient) {
   // --- Club ---
   router.post("/club/issue", route(async (client, { club, athlete }) => {
     const c = clubOf(club), a = athleteOf(athlete);
-    return done("Adhésion émise par " + club, await issue(client, c, a.address, CLUB_MEMBER, { expiration: SEASON_END_ISO, memo: `adhesion ${SEASON}` }));
+    const tx = await issue(client, c, a.address, CLUB_MEMBER, { expiration: SEASON_END_ISO, memo: `adhesion ${SEASON}` });
+    requests.clear(athlete); // la demande d'adhésion (hors chaîne) est traitée
+    return done("Adhésion validée par " + clubLabel(club), tx);
   }));
 
   router.post("/club/revoke", route(async (client, { club, athlete }) => {
     const c = clubOf(club), a = athleteOf(athlete);
-    return done("Adhésion révoquée par " + club, await revoke(client, c, a.address, c.address, CLUB_MEMBER, "DEPART_CLUB"));
+    return done("Adhésion révoquée par " + clubLabel(club), await revoke(client, c, a.address, c.address, CLUB_MEMBER, "DEPART_CLUB"));
+  }));
+
+  // Demandes d'adhésion (hors chaîne) : l'athlète choisit un club, le club les voit puis valide ou refuse.
+  router.post("/athlete/request", route(async (client, { athlete, club }) => {
+    const a = athleteOf(athlete);
+    const c = clubOf(club);
+    if (await getCredential(client, a.address, c.address, CLUB_MEMBER)) throw new HttpError(409, "Déjà adhérent de ce club.");
+    requests.set(athlete, club);
+    return { label: "Demande d'adhésion envoyée à " + clubLabel(club) };
+  }));
+
+  router.post("/athlete/cancel-request", route(async (client, { athlete }) => {
+    athleteOf(athlete);
+    requests.clear(athlete);
+    return { label: "Demande d'adhésion annulée" };
+  }));
+
+  router.post("/club/decline", route(async (client, { club, athlete }) => {
+    clubOf(club);
+    athleteOf(athlete);
+    if (requests.get(athlete) === club) requests.clear(athlete);
+    return { label: "Demande refusée par " + clubLabel(club) };
   }));
 
   // --- Fédération ---

@@ -3,11 +3,33 @@
   "athlete1": {
     "name": "Vianney de Maximy",
     "photo": "vianney.jpeg",
-    "dossier": { "complet": true, "saison": "2026-2027" }
+    "dossier": {
+      "complet": true,
+      "saison": "2026-2027"
+    }
   },
   "athlete2": {
     "name": "Inès Haller",
     "photo": "ines.jpeg",
-    "dossier": { "complet": true, "saison": "2026-2027" }
+    "dossier": {
+      "complet": true,
+      "saison": "2026-2027"
+    }
+  },
+  "athlete3": {
+    "name": "Maxence Ribaute-Picard",
+    "photo": "maxence.jpeg",
+    "dossier": {
+      "complet": true,
+      "saison": "2026-2027"
+    }
+  },
+  "athlete4": {
+    "name": "Amélie Dupouy",
+    "photo": "amelie.jpeg",
+    "dossier": {
+      "complet": true,
+      "saison": "2026-2027"
+    }
   }
 }

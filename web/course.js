@@ -23,7 +23,7 @@ function render(rows) {
   for (const r of rows) {
     const card = el("div", { class: "card runner" });
     const top = el("div", { class: "top" });
-    top.append(r.licence.holder ? el("img", { src: r.licence.holder.photoUrl, alt: `Photo de ${r.name}` }) : el("div", { class: "noimg" }));
+    top.append(el("img", { src: r.photoUrl, alt: `Photo de ${r.name}` }));
 
     const info = el("div");
     info.append(el("div", { class: "name" }, r.name));

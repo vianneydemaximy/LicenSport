@@ -8,26 +8,45 @@
 </head>
 <body>
   <header>
-    <nav><a href="/">Accueil</a><a href="/course.html">Contrôle de course</a><a href="/admin.html">Gestion</a></nav>
+    <nav id="nav"></nav>
     <a href="/">LicenSport</a><small>la licence sportive vérifiable par tous</small>
   </header>
   <main>
     <h1>La licence qui suit le sportif de club en club</h1>
-    <p class="lead">Le club valide l'adhésion, la fédération émet la licence, et n'importe quel organisateur la vérifie dans le registre public XRPL, sans contacter personne.</p>
+    <p class="lead">Le club valide l'adhésion, la fédération émet la licence, et n'importe quel organisateur la vérifie dans le registre public XRPL, sans contacter personne. Chaque acteur a son espace : choisissez un profil.</p>
 
-    <div class="flow">
-      <div class="box">Le club valide l'adhésion</div><div class="arrow">›</div>
-      <div class="box fed">La fédération émet la licence</div><div class="arrow">›</div>
-      <div class="box">Le sportif accepte</div><div class="arrow">›</div>
-      <div class="box">La course contrôle (QR code)</div>
+    <h2>Qui êtes-vous ?</h2>
+    <div class="profiles">
+      <a class="profile athlete" href="/athlete.html">
+        <span class="actor athlete">Athlète</span>
+        <strong>Je suis le sportif</strong>
+        <span>J'accepte mon adhésion et ma licence, je présente mon QR code.</span>
+      </a>
+      <a class="profile club" href="/club.html">
+        <span class="actor club">Club</span>
+        <strong>Je suis un club</strong>
+        <span>Je valide l'adhésion d'un sportif, ou je la révoque quand il part.</span>
+      </a>
+      <a class="profile federation" href="/federation.html">
+        <span class="actor federation">Fédération</span>
+        <strong>Je suis la fédération</strong>
+        <span>J'émets la licence si l'adhésion est valide, je peux la suspendre.</span>
+      </a>
+      <a class="profile organizer" href="/course.html">
+        <span class="actor organizer">Organisateur</span>
+        <strong>J'organise une course</strong>
+        <span>Je contrôle les licences des coureurs, quel que soit leur club.</span>
+      </a>
     </div>
-    <p style="text-align:center"><a class="btn" href="/course.html">Voir le contrôle de course</a></p>
 
-    <h2>Licences de démonstration (scannez le QR code)</h2>
-    <div class="grid" id="athletes"><p class="muted">Chargement…</p></div>
-    <div class="notice" id="phone" hidden></div>
+    <h2>Le parcours en direct</h2>
+    <p class="lead">Chaque étape s'allume quand l'acteur concerné agit. Faites une action dans un profil, puis revenez ici : le parcours avance tout seul.</p>
+    <div id="live"><p class="muted">Chargement…</p></div>
+
     <footer id="footer"></footer>
   </main>
+  <script src="common.js"></script>
+  <script src="pipeline.js"></script>
   <script src="home.js"></script>
 </body>
 </html>

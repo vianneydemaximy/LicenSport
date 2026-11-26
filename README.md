@@ -53,7 +53,7 @@ Prérequis : Node.js LTS.
 ```bash
 npm install
 cp .env.example .env
-npm run setup        # crée les 5 comptes Testnet via le faucet et remplit .env
+npm run setup        # crée les 7 comptes Testnet via le faucet et remplit .env
 ```
 
 Une seule personne lance `npm run setup`, puis partage le `.env` en privé aux autres. Ne pas le relancer avec `--force` sans prévenir l'équipe : les adresses changeraient.
@@ -61,31 +61,36 @@ Une seule personne lance `npm run setup`, puis partage le `.env` en privé aux a
 ## Lancement
 
 ```bash
-npm start            # http://localhost:3000
+npm start            # http://localhost:3000 : démo complète (actions possibles depuis localhost)
+npm run public       # version publique en lecture seule, sans aucune seed
 npm run demo         # scénario complet en ligne de commande (~1 min)
 npm run check        # test de faisabilité des Credentials sur le Testnet
 ```
 
-Pour scanner le QR code avec un téléphone (même Wi-Fi) : `PUBLIC_URL=http://<IP-du-PC>:3000 npm start`.
+L'interface a un espace par acteur : **Athlète** (choisit son club, accepte ses attestations, présente son QR code), **Club** (valide l'adhésion, recherche et filtres), **Fédération** (émet et suspend la licence), **Course** (contrôle des licences quel que soit le club).
+
+Les QR codes pointent automatiquement vers l'adresse du PC sur le Wi-Fi (affichée au démarrage) : le téléphone doit être sur le même réseau. `PUBLIC_URL=...` permet de forcer une autre adresse.
 
 ## Adresses de test (Testnet)
 
 | Rôle | Adresse |
 |---|---|
 | Fédération | [`raTf3i2jq28R4D9oJXVAMo2gG9WXqJvtup`](https://testnet.xrpl.org/accounts/raTf3i2jq28R4D9oJXVAMo2gG9WXqJvtup) |
-| Club A | [`rLbSjF3sc2UZf1DL3G4Nf5bTHMR3rEb8tY`](https://testnet.xrpl.org/accounts/rLbSjF3sc2UZf1DL3G4Nf5bTHMR3rEb8tY) |
-| Club B | [`rBCxDUmPo4vuFYCwrsPx5xbwPnw6CT1e5a`](https://testnet.xrpl.org/accounts/rBCxDUmPo4vuFYCwrsPx5xbwPnw6CT1e5a) |
+| Club « AC Belvédère » (fictif) | [`rLbSjF3sc2UZf1DL3G4Nf5bTHMR3rEb8tY`](https://testnet.xrpl.org/accounts/rLbSjF3sc2UZf1DL3G4Nf5bTHMR3rEb8tY) |
+| Club « Racing Club des Rives » (fictif) | [`rBCxDUmPo4vuFYCwrsPx5xbwPnw6CT1e5a`](https://testnet.xrpl.org/accounts/rBCxDUmPo4vuFYCwrsPx5xbwPnw6CT1e5a) |
 | Sportif 1 (Vianney de Maximy) | [`rMCLSRGnGYBs7djdQhemM5mzFeXdHJnjZR`](https://testnet.xrpl.org/accounts/rMCLSRGnGYBs7djdQhemM5mzFeXdHJnjZR) |
 | Sportif 2 (Inès Haller) | [`rs69qe1YaUwYWb76zfEQGFLf8dAxADXJrL`](https://testnet.xrpl.org/accounts/rs69qe1YaUwYWb76zfEQGFLf8dAxADXJrL) |
+| Sportif 3 (Maxence Ribaute-Picard) | [`rK5SH2edhW3ufRFjV3TAuwFZXewgs5Lcdh`](https://testnet.xrpl.org/accounts/rK5SH2edhW3ufRFjV3TAuwFZXewgs5Lcdh) |
+| Sportif 4 (Amélie Dupouy) | [`rQBwq6gUo5hT2Mb4vLqYqjnZhWzNCezZgg`](https://testnet.xrpl.org/accounts/rQBwq6gUo5hT2Mb4vLqYqjnZhWzNCezZgg) |
 
-Les sportifs sont des membres de l'équipe, qui ont donné leur accord pour la démonstration : leur nom et leur photo restent **hors chaîne** (serveur), seule une empreinte SHA-256 est publiée sur XRPL.
+Les sportifs sont des membres de l'équipe, qui ont donné leur accord pour la démonstration : leur nom et leur photo restent **hors chaîne** (serveur), seule une empreinte SHA-256 est publiée sur XRPL. Les noms des clubs sont fictifs.
 
 ## Scénario de démonstration
 
-1. **Adhésion** : le club A émet l'attestation « adhérent » (`CredentialCreate`), le sportif l'accepte (`CredentialAccept`).
+1. **Adhésion** : l'athlète demande à rejoindre un club (hors chaîne), le club l'émet l'attestation « adhérent » (`CredentialCreate`), le sportif l'accepte (`CredentialAccept`).
 2. **Licence** : la fédération vérifie l'adhésion et l'affiliation du club, émet la licence avec expiration au 30 juin 2027 et l'empreinte du dossier et de la photo, puis le sportif l'accepte.
 3. **Contrôle par QR code** : ouvrir <http://localhost:3000>, scanner ou cliquer sur le sportif 1. La page lit le registre : « LICENCE VALIDE », émetteur reconnu, photo conforme.
-4. **Changement de club** : le club A révoque l'adhésion (`CredentialDelete`), le club B en émet une. L'historique reste visible dans la page et dans l'explorateur.
+4. **Changement de club** : l'ancien club révoque l'adhésion (`CredentialDelete`), le nouveau club en émet une. L'historique reste visible dans la page et dans l'explorateur.
 5. **Suspension** : la fédération révoque la licence (`CredentialDelete`, motif en Memo). La page de vérification passe d'elle-même (toutes les 5 s) à « LICENCE NON VALIDE ».
 
 Pour la jouer en direct : `npm start` dans un terminal, la page de vérification ouverte, puis `npm run demo` dans un autre. Chaque transaction affiche son lien dans l'explorateur.

@@ -38,8 +38,8 @@ async function main() {
       }
     }
 
-    step(1, "Adhésion au club A");
-    show("Le club A émet l'adhésion", await issue(client, w.clubA, w.athlete1.address, CLUB_MEMBER, {
+    step(1, "Adhésion au club (" + "AC Belvédère" + ")");
+    show("Le club AC Belvédère émet l'adhésion", await issue(client, w.clubA, w.athlete1.address, CLUB_MEMBER, {
       expiration: SEASON_END_ISO, memo: `adhesion ${SEASON}`,
     }));
     show("Le sportif accepte", await accept(client, w.athlete1, w.clubA.address, CLUB_MEMBER));
@@ -61,9 +61,9 @@ async function main() {
     showVerify("Sportif 1 :", await verify(client, w.athlete1.address, fed, LICENCE, { expectedUri: uri }));
     showVerify("Sportif 2 (sans licence) :", await verify(client, w.athlete2.address, fed, LICENCE));
 
-    step(4, "Changement de club : A -> B");
-    show("Le club A révoque l'adhésion", await revoke(client, w.clubA, w.athlete1.address, w.clubA.address, CLUB_MEMBER, "DEPART_CLUB"));
-    show("Le club B émet l'adhésion", await issue(client, w.clubB, w.athlete1.address, CLUB_MEMBER, {
+    step(4, "Changement de club : AC Belvédère -> Racing Club des Rives");
+    show("AC Belvédère révoque l'adhésion", await revoke(client, w.clubA, w.athlete1.address, w.clubA.address, CLUB_MEMBER, "DEPART_CLUB"));
+    show("Racing Club des Rives émet l'adhésion", await issue(client, w.clubB, w.athlete1.address, CLUB_MEMBER, {
       expiration: SEASON_END_ISO, memo: `adhesion ${SEASON}`,
     }));
     show("Le sportif accepte", await accept(client, w.athlete1, w.clubB.address, CLUB_MEMBER));

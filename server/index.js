@@ -9,9 +9,12 @@ const path = require("path");
 const express = require("express");
 const QRCode = require("qrcode");
 const xrpl = require("xrpl");
-const { TESTNET_URL, CREDENTIAL_TYPES, ROOT, EXPLORER, publicAddresses, accountLink } = require("../lib/config");
+const { TESTNET_URL, CREDENTIAL_TYPES, CLUB_LABELS, ROOT, EXPLORER, publicAddresses, accountLink } = require("../lib/config");
 const { verify, history } = require("../lib/credentials");
-const { recordForAddress, listAthletes } = require("../lib/offchain");
+const { recordForAddress, recordForRole, listAthletes } = require("../lib/offchain");
+const requests = require("../lib/requests");
+
+const LOCAL = ["127.0.0.1", "::1", "::ffff:127.0.0.1"];
 
 const PORT = process.env.PORT || 3000;
 const FEDERATION = publicAddresses().federation;
@@ -47,25 +50,66 @@ async function verifyLicence(subject) {
   };
 }
 
-const CLUB_LABELS = { clubA: "Club A", clubB: "Club B" };
 
-/** Club actuel du sportif (adhésion lue dans le registre), ou null. */
-async function membershipOf(subject) {
+/** Adhésion du sportif dans CHAQUE club : { clubA: état|null, clubB: état|null } (lu dans le registre). */
+async function membershipsOf(subject) {
   const client = await getClient();
   const addrs = publicAddresses();
+  const out = {};
   for (const [role, label] of Object.entries(CLUB_LABELS)) {
     const v = await verify(client, subject, addrs[role], CREDENTIAL_TYPES.CLUB_MEMBER);
-    if (v.reason !== "absente ou révoquée") {
-      return { club: role, label, accepted: v.accepted, valid: v.valid, expiresAt: v.expiresAt, reason: v.reason };
-    }
+    out[role] =
+      v.reason === "absente ou révoquée"
+        ? null
+        : { club: role, label, accepted: v.accepted, valid: v.valid, expiresAt: v.expiresAt, reason: v.reason };
   }
-  return null;
+  return out;
 }
 
-/** Tout le parcours d'un sportif : adhésion au club + licence de la fédération. */
+/** Tout le parcours d'un sportif : adhésions aux clubs + licence de la fédération. */
 async function pipelineOf(subject) {
-  const [membership, licence] = await Promise.all([membershipOf(subject), verifyLicence(subject)]);
-  return { subject, membership, licence };
+  const [memberships, licence] = await Promise.all([membershipsOf(subject), verifyLicence(subject)]);
+  const all = Object.values(memberships).filter(Boolean);
+  // Club "actuel" affiché : une adhésion valide en priorité, sinon la première existante.
+  const membership = all.find((m) => m.valid) || all[0] || null;
+  return { subject, membership, memberships, licence };
+}
+
+/** Vue d'ensemble de tous les sportifs de démonstration (pages fédération, clubs, course). */
+async function computeOverview() {
+  return Promise.all(
+    listAthletes().map(async (a) => {
+      const p = await pipelineOf(a.address);
+      // Demande d'adhésion en cours (hors chaîne) : disparaît dès que le club a validé.
+      let askedClub = requests.get(a.role);
+      if (askedClub && p.memberships[askedClub]) {
+        requests.clear(a.role);
+        askedClub = null;
+      }
+      return {
+        role: a.role,
+        name: a.name,
+        address: a.address,
+        photoUrl: `/api/people/${a.role}/photo`,
+        request: askedClub ? { club: askedClub, label: CLUB_LABELS[askedClub] } : null,
+        ...p,
+      };
+    })
+  );
+}
+
+// Court cache : plusieurs onglets ouverts ne multiplient pas les requêtes vers le Testnet public.
+// Vidé après chaque action admin pour que l'écran reflète aussitôt la nouvelle transaction.
+let overviewCache = { at: 0, promise: null };
+const invalidateOverview = () => (overviewCache = { at: 0, promise: null });
+function overview() {
+  if (overviewCache.promise && Date.now() - overviewCache.at < 2500) return overviewCache.promise;
+  const promise = computeOverview().catch((e) => {
+    invalidateOverview();
+    throw e;
+  });
+  overviewCache = { at: Date.now(), promise };
+  return promise;
 }
 
 /** Adresse IP du PC sur le réseau local (Wi-Fi), pour que les téléphones puissent atteindre le serveur. */
@@ -93,8 +137,21 @@ app.param("subject", (req, res, next, value) => {
   next();
 });
 
+// Mode administration (démo) : permet d'émettre, accepter et révoquer depuis le navigateur (localhost uniquement).
+// `npm start` l'active ; `npm run public` lance la version en lecture seule, sans aucune seed.
+const ADMIN = !process.argv.includes("--public") && process.env.ADMIN !== "0";
+
 app.get("/api/config", (req, res) => {
-  res.json({ network: "XRPL Testnet", explorer: EXPLORER, federation: FEDERATION, federationLink: accountLink(FEDERATION), baseUrl: baseUrl(req) });
+  const addrs = publicAddresses();
+  res.json({
+    network: "XRPL Testnet",
+    explorer: EXPLORER,
+    federation: FEDERATION,
+    federationLink: accountLink(FEDERATION),
+    clubs: Object.fromEntries(Object.entries(CLUB_LABELS).map(([role, label]) => [role, { label, address: addrs[role], link: accountLink(addrs[role]) }])),
+    baseUrl: baseUrl(req),
+    admin: ADMIN,
+  });
 });
 
 // Parcours d'un sportif : adhésion (club) puis licence (fédération).
@@ -102,12 +159,8 @@ app.get("/api/pipeline/:subject", async (req, res) => res.json(await pipelineOf(
 
 // Contrôle de course : tous les inscrits, quel que soit leur club.
 // La vérification ne regarde que la signature de la fédération : le club est affiché à titre d'information.
-app.get("/api/course", async (req, res) => {
-  const rows = await Promise.all(
-    listAthletes().map(async (a) => ({ role: a.role, name: a.name, address: a.address, ...(await pipelineOf(a.address)) }))
-  );
-  res.json(rows);
-});
+app.get("/api/course", async (req, res) => res.json(await overview()));
+app.get("/api/overview", async (req, res) => res.json(await overview()));
 
 app.get("/api/athletes", (req, res) => res.json(listAthletes()));
 
@@ -115,7 +168,16 @@ app.get("/api/verify/:subject", async (req, res) => res.json(await verifyLicence
 
 app.get("/api/history/:subject", async (req, res) => res.json(await history(await getClient(), req.params.subject)));
 
-// La photo n'est servie que si la licence est valide (minimisation des données).
+// Photo "interne" pour les espaces athlète, club, fédération et course : connus de la plateforme,
+// uniquement depuis localhost. Le contrôle public (QR code) ne voit la photo que si la licence est valide.
+app.get("/api/people/:role/photo", (req, res) => {
+  if (!LOCAL.includes(req.socket.remoteAddress)) return res.status(403).end();
+  const rec = recordForRole(req.params.role);
+  if (!rec) return res.status(404).end();
+  res.sendFile(rec.photoPath);
+});
+
+// La photo publique n'est servie que si la licence est valide (minimisation des données).
 app.get("/api/photo/:subject", async (req, res) => {
   const rec = recordForAddress(req.params.subject);
   const v = await verifyLicence(req.params.subject);
@@ -130,18 +192,17 @@ app.get("/api/qr/:subject", async (req, res) => {
   res.type("image/svg+xml").send(svg);
 });
 
-// Mode administration (démo) : désactivé par défaut. Lancer avec `npm run admin`.
-const ADMIN = process.argv.includes("--admin") || process.env.ADMIN === "1";
 if (ADMIN) {
   try {
-    app.use("/api/admin", require("./admin").createAdminRouter(getClient));
-    console.log("Mode ADMIN actif (localhost uniquement) : http://localhost:" + PORT + "/admin.html");
+    app.use("/api/admin", require("./admin").createAdminRouter(getClient, invalidateOverview));
+    console.log("Mode DEMO actif : actions fédération, clubs et athlètes possibles depuis localhost uniquement.");
   } catch (e) {
-    console.error("Mode admin impossible :", e.message);
+    console.error("Mode démo impossible (seeds manquantes dans .env ?) :", e.message);
     process.exit(1);
   }
 } else {
-  app.use("/api/admin", (req, res) => res.status(404).json({ error: "Mode admin désactivé. Lancez : npm run admin" }));
+  console.log("Mode PUBLIC (lecture seule) : aucune seed chargée.");
+  app.use("/api/admin", (req, res) => res.status(404).json({ error: "Mode lecture seule. Lancez : npm start" }));
 }
 
 app.use(express.static(path.join(ROOT, "web")));

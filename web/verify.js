@@ -3,6 +3,8 @@
 const subject = new URLSearchParams(location.search).get("subject");
 const REFRESH_MS = 5000;
 let federation = null;
+let explorerBase = "https://testnet.xrpl.org";
+let clubsByAddr = {};
 
 function el(tag, attrs = {}, text) {
   const e = document.createElement(tag);
@@ -56,7 +58,7 @@ function renderStatus(v) {
   const dl = document.getElementById("details");
   dl.replaceChildren();
   const issuerOk = federation ? v.issuer === federation : null;
-  row(dl, "Sportif (adresse)", el("span", { class: "addr" }, subject));
+  row(dl, "Adresse du sportif", el("a", { class: "addr-s", href: `${explorerBase}/accounts/${subject}`, target: "_blank", rel: "noopener", title: subject }, short(subject)));
   row(dl, "Émetteur", el("span", {}, `${short(v.issuer)} `));
   dl.lastChild.append(tag(issuerOk, "fédération reconnue", "émetteur inconnu"));
   row(dl, "Acceptée par le sportif", tag(v.reason === "absente ou révoquée" ? null : v.accepted, "oui", "non", "—"));
@@ -66,28 +68,6 @@ function renderStatus(v) {
   row(dl, "Dernier contrôle", el("span", {}, fmtDate(v.checkedAt)));
 }
 
-const ACTIONS = {
-  CredentialCreate: ["émis", "émise"],
-  CredentialAccept: ["accepté par le sportif", "acceptée par le sportif"],
-  CredentialDelete: ["supprimé (révoqué)", "supprimée (révoquée)"],
-};
-const NAMES = { CLUB_MEMBER: "Adhésion au club", LICENCE_2026: "Licence 2026" };
-
-function renderHistory(events) {
-  const ul = document.getElementById("history");
-  ul.replaceChildren();
-  if (!events.length) return ul.append(el("li", { class: "muted" }, "Aucune transaction."));
-  for (const e of [...events].reverse()) {
-    const li = el("li");
-    const who = e.issuer === federation ? "fédération" : `club ${short(e.issuer)}`;
-    li.append(
-      el("strong", {}, `${NAMES[e.type] || e.type} ${(ACTIONS[e.action] || [e.action, e.action])[e.type === "LICENCE_2026" ? 1 : 0]}`),
-      el("span", { class: "muted" }, ` · ${who} · ${fmtDate(e.date)}${e.memo ? " · " + e.memo : ""} · `),
-      el("a", { href: e.link, target: "_blank", rel: "noopener" }, "voir dans l'explorateur")
-    );
-    ul.append(li);
-  }
-}
 
 async function refresh() {
   try {
@@ -97,7 +77,7 @@ async function refresh() {
     ]);
     renderStatus(p.licence);
     renderPipeline(document.getElementById("pipeline"), p);
-    renderHistory(h);
+    LS.renderHistory(document.getElementById("history"), h, { key: "verify", whoOf: (a) => (a === federation ? "Fédération" : clubsByAddr[a] || "Club") });
   } catch {
     const box = document.getElementById("status");
     box.className = "status wait";
@@ -112,6 +92,8 @@ async function main() {
   }
   const cfg = await fetch("/api/config").then((r) => r.json());
   federation = cfg.federation;
+  explorerBase = cfg.explorer;
+  clubsByAddr = Object.fromEntries(Object.values(cfg.clubs).map((c) => [c.address, c.label]));
   document.getElementById("footer").append(`Réseau : ${cfg.network} · contrôle automatique toutes les ${REFRESH_MS / 1000} s`);
   await refresh();
   setInterval(refresh, REFRESH_MS);

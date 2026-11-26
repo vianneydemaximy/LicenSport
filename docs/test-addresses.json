@@ -21,6 +21,14 @@
     "athlete2": {
       "address": "rs69qe1YaUwYWb76zfEQGFLf8dAxADXJrL",
       "explorer": "https://testnet.xrpl.org/accounts/rs69qe1YaUwYWb76zfEQGFLf8dAxADXJrL"
+    },
+    "athlete3": {
+      "address": "rK5SH2edhW3ufRFjV3TAuwFZXewgs5Lcdh",
+      "explorer": "https://testnet.xrpl.org/accounts/rK5SH2edhW3ufRFjV3TAuwFZXewgs5Lcdh"
+    },
+    "athlete4": {
+      "address": "rQBwq6gUo5hT2Mb4vLqYqjnZhWzNCezZgg",
+      "explorer": "https://testnet.xrpl.org/accounts/rQBwq6gUo5hT2Mb4vLqYqjnZhWzNCezZgg"
     }
   }
 }

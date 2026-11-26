@@ -29,3 +29,4 @@ wallets.json
 Thumbs.db
 .env
 node_modules/
+server/data/requests.json
