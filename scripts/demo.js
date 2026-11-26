@@ -38,13 +38,13 @@ async function main() {
       }
     }
 
-    step(1, "Adhésion au club (" + "AC Belvédère" + ")");
-    show("Le club AC Belvédère émet l'adhésion", await issue(client, w.clubA, w.athlete1.address, CLUB_MEMBER, {
+    step(1, "Adhésion : l'athlète demande, Bayern de Monique valide");
+    show("Le club Bayern de Monique valide l'adhésion", await issue(client, w.clubA, w.athlete1.address, CLUB_MEMBER, {
       expiration: SEASON_END_ISO, memo: `adhesion ${SEASON}`,
     }));
-    show("Le sportif accepte", await accept(client, w.athlete1, w.clubA.address, CLUB_MEMBER));
+    show("Consentement de l'athlète enregistré (sa demande vaut accord)", await accept(client, w.athlete1, w.clubA.address, CLUB_MEMBER));
 
-    step(2, "Émission de la licence par la fédération");
+    step(2, "Licence : l'athlète demande, la fédération valide");
     const adhesion = await verify(client, w.athlete1.address, w.clubA.address, CLUB_MEMBER);
     if (!adhesion.valid || !affiliatedClubs.includes(w.clubA.address)) {
       throw new Error("Adhésion absente ou club non affilié : pas de licence.");
@@ -52,21 +52,21 @@ async function main() {
     console.log("  adhésion vérifiée par la fédération : OK");
     // Empreinte de la vraie photo + du dossier (hors chaîne) : seule elle va dans l'URI.
     const uri = recordForRole("athlete1").uri;
-    show("La fédération émet la licence", await issue(client, w.federation, w.athlete1.address, LICENCE, {
+    show("La fédération valide la licence", await issue(client, w.federation, w.athlete1.address, LICENCE, {
       expiration: SEASON_END_ISO, uri, memo: `licence ${SEASON}`,
     }));
-    show("Le sportif accepte", await accept(client, w.athlete1, fed, LICENCE));
+    show("Consentement de l'athlète enregistré (sa demande vaut accord)", await accept(client, w.athlete1, fed, LICENCE));
 
     step(3, "Contrôle le jour J (ce que fait la page de vérification)");
     showVerify("Sportif 1 :", await verify(client, w.athlete1.address, fed, LICENCE, { expectedUri: uri }));
     showVerify("Sportif 2 (sans licence) :", await verify(client, w.athlete2.address, fed, LICENCE));
 
-    step(4, "Changement de club : AC Belvédère -> Racing Club des Rives");
-    show("AC Belvédère révoque l'adhésion", await revoke(client, w.clubA, w.athlete1.address, w.clubA.address, CLUB_MEMBER, "DEPART_CLUB"));
-    show("Racing Club des Rives émet l'adhésion", await issue(client, w.clubB, w.athlete1.address, CLUB_MEMBER, {
+    step(4, "Changement de club : Bayern de Monique -> AS Ketchup");
+    show("Bayern de Monique révoque l'adhésion", await revoke(client, w.clubA, w.athlete1.address, w.clubA.address, CLUB_MEMBER, "DEPART_CLUB"));
+    show("AS Ketchup valide l'adhésion", await issue(client, w.clubB, w.athlete1.address, CLUB_MEMBER, {
       expiration: SEASON_END_ISO, memo: `adhesion ${SEASON}`,
     }));
-    show("Le sportif accepte", await accept(client, w.athlete1, w.clubB.address, CLUB_MEMBER));
+    show("Consentement de l'athlète enregistré (sa demande vaut accord)", await accept(client, w.athlete1, w.clubB.address, CLUB_MEMBER));
 
     step(5, "Suspension par la fédération");
     show("La fédération révoque la licence", await revoke(client, w.federation, w.athlete1.address, fed, LICENCE, "SUSP_DISCIPLINE"));

@@ -43,9 +43,6 @@ footer { margin-top: 34px; font-size: .85rem; color: var(--muted); border-top: 2
 /* Blocs */
 .card { background: var(--white); border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--sand); padding: 20px; }
 .grid { display: grid; gap: 26px; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); }
-.athlete { text-align: center; }
-.athlete h2 { display: table; margin: 0 auto 14px; }
-.athlete img.qr { display: block; margin: 0 auto 8px; width: 210px; height: 210px; border: 2px solid var(--sand); padding: 6px; background: #fff; }
 .addr { font-family: ui-monospace, Consolas, monospace; font-size: .76rem; word-break: break-all; color: var(--muted); }
 
 /* Boutons */
@@ -219,3 +216,31 @@ button.chip.active { background: var(--ink); border-color: var(--ink); color: #f
 .club-line:last-child { margin-bottom: 0; }
 
 a.profile { text-align: left; }
+
+/* ---- Menu déroulant des profils ---- */
+header nav { display: flex; align-items: center; gap: 6px; }
+header nav > a { margin-left: 8px; }
+details.menu { position: relative; margin-left: 14px; }
+details.menu summary { list-style: none; cursor: pointer; }
+details.menu summary::-webkit-details-marker { display: none; }
+.menu-btn { display: inline-block; padding: 5px 14px; border: 2px solid #fff; color: #fff; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: .8rem; background: transparent; }
+.menu-btn.athlete { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+.menu-btn.club { background: var(--peach); border-color: var(--peach); color: var(--ink); }
+.menu-btn.federation { background: #fff; border-color: #fff; color: var(--ink); }
+.menu-btn.organizer { background: var(--warn); border-color: var(--warn); color: var(--ink); }
+.menu-list { position: absolute; right: 0; top: calc(100% + 8px); min-width: 230px; background: #fff; border: 2px solid var(--ink); box-shadow: 5px 5px 0 var(--sand); z-index: 20; padding: 8px 0; }
+.menu-group { padding: 4px 0; }
+.menu-title { padding: 2px 14px; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.menu-list a { display: block; margin: 0; padding: 7px 14px 7px 22px; color: var(--ink); text-transform: none; letter-spacing: 0; font-size: .95rem; font-weight: 700; border: 0; text-decoration: none; }
+.menu-list a:hover { background: var(--accent); }
+.menu-list a.active { background: var(--paper); box-shadow: inset 4px 0 0 var(--accent-strong); }
+
+/* Sélecteur « Vous agissez en tant que » */
+.actas { display: flex; align-items: center; gap: 10px; margin: 0 0 20px; flex-wrap: wrap; }
+.actas span { font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: .78rem; color: var(--muted); }
+.actas select { min-width: 220px; }
+
+@media (max-width: 560px) {
+  header nav { float: none; flex-wrap: wrap; padding-top: 8px; }
+  .menu-list { right: auto; left: 0; }
+}

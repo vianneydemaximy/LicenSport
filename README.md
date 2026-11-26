@@ -1,4 +1,4 @@
-# LicenSport
+﻿# LicenSport
 
 **La licence sportive vérifiable par tous, qui suit le sportif de club en club.**
 
@@ -53,7 +53,7 @@ Prérequis : Node.js LTS.
 ```bash
 npm install
 cp .env.example .env
-npm run setup        # crée les 7 comptes Testnet via le faucet et remplit .env
+npm run setup        # crée les 8 comptes Testnet via le faucet et remplit .env
 ```
 
 Une seule personne lance `npm run setup`, puis partage le `.env` en privé aux autres. Ne pas le relancer avec `--force` sans prévenir l'équipe : les adresses changeraient.
@@ -76,8 +76,9 @@ Les QR codes pointent automatiquement vers l'adresse du PC sur le Wi-Fi (affich�
 | Rôle | Adresse |
 |---|---|
 | Fédération | [`raTf3i2jq28R4D9oJXVAMo2gG9WXqJvtup`](https://testnet.xrpl.org/accounts/raTf3i2jq28R4D9oJXVAMo2gG9WXqJvtup) |
-| Club « AC Belvédère » (fictif) | [`rLbSjF3sc2UZf1DL3G4Nf5bTHMR3rEb8tY`](https://testnet.xrpl.org/accounts/rLbSjF3sc2UZf1DL3G4Nf5bTHMR3rEb8tY) |
-| Club « Racing Club des Rives » (fictif) | [`rBCxDUmPo4vuFYCwrsPx5xbwPnw6CT1e5a`](https://testnet.xrpl.org/accounts/rBCxDUmPo4vuFYCwrsPx5xbwPnw6CT1e5a) |
+| Club « Bayern de Monique » (fictif) | [`rLbSjF3sc2UZf1DL3G4Nf5bTHMR3rEb8tY`](https://testnet.xrpl.org/accounts/rLbSjF3sc2UZf1DL3G4Nf5bTHMR3rEb8tY) |
+| Club « AS Ketchup » (fictif) | [`rBCxDUmPo4vuFYCwrsPx5xbwPnw6CT1e5a`](https://testnet.xrpl.org/accounts/rBCxDUmPo4vuFYCwrsPx5xbwPnw6CT1e5a) |
+| Club « Breaking Badminton » (fictif) | [`rs54jFcaHDAW5d74sV6d2f4nVcTks7EQ7w`](https://testnet.xrpl.org/accounts/rs54jFcaHDAW5d74sV6d2f4nVcTks7EQ7w) |
 | Sportif 1 (Vianney de Maximy) | [`rMCLSRGnGYBs7djdQhemM5mzFeXdHJnjZR`](https://testnet.xrpl.org/accounts/rMCLSRGnGYBs7djdQhemM5mzFeXdHJnjZR) |
 | Sportif 2 (Inès Haller) | [`rs69qe1YaUwYWb76zfEQGFLf8dAxADXJrL`](https://testnet.xrpl.org/accounts/rs69qe1YaUwYWb76zfEQGFLf8dAxADXJrL) |
 | Sportif 3 (Maxence Ribaute-Picard) | [`rK5SH2edhW3ufRFjV3TAuwFZXewgs5Lcdh`](https://testnet.xrpl.org/accounts/rK5SH2edhW3ufRFjV3TAuwFZXewgs5Lcdh) |
@@ -87,8 +88,8 @@ Les sportifs sont des membres de l'équipe, qui ont donné leur accord pour la d
 
 ## Scénario de démonstration
 
-1. **Adhésion** : l'athlète demande à rejoindre un club (hors chaîne), le club l'émet l'attestation « adhérent » (`CredentialCreate`), le sportif l'accepte (`CredentialAccept`).
-2. **Licence** : la fédération vérifie l'adhésion et l'affiliation du club, émet la licence avec expiration au 30 juin 2027 et l'empreinte du dossier et de la photo, puis le sportif l'accepte.
+1. **Adhésion** : l'athlète demande à rejoindre un club (hors chaîne) ; le club valide (`CredentialCreate`) et la signature de l'athlète (`CredentialAccept`) est enregistrée aussitôt : sa demande vaut consentement.
+2. **Licence** : l'athlète adhérent demande sa licence ; la fédération vérifie l'adhésion et l'affiliation du club, valide (expiration au 30 juin 2027, empreinte du dossier et de la photo dans l'URI), et la signature de l'athlète est enregistrée aussitôt.
 3. **Contrôle par QR code** : ouvrir <http://localhost:3000>, scanner ou cliquer sur le sportif 1. La page lit le registre : « LICENCE VALIDE », émetteur reconnu, photo conforme.
 4. **Changement de club** : l'ancien club révoque l'adhésion (`CredentialDelete`), le nouveau club en émet une. L'historique reste visible dans la page et dans l'explorateur.
 5. **Suspension** : la fédération révoque la licence (`CredentialDelete`, motif en Memo). La page de vérification passe d'elle-même (toutes les 5 s) à « LICENCE NON VALIDE ».
@@ -111,3 +112,4 @@ Le format de réponse de la vérification et les signatures des fonctions sont d
 ## Équipe
 
 Inès Haller, Vianney de Maximy, Amélie Dupouy, Maxence Ribaute-Picard.
+

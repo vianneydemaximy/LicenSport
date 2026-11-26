@@ -16,7 +16,7 @@ const requests = require("../lib/requests");
 
 const { CLUB_MEMBER, LICENCE } = CREDENTIAL_TYPES;
 const LSF_ACCEPTED = 0x00010000;
-const CLUBS = ["clubA", "clubB"];
+const CLUBS = ["clubA", "clubB", "clubC"];
 const MOTIFS = ["SUSP_DISCIPLINE", "SUSP_ADMINISTRATIVE"]; // jamais de motif médical sur la chaîne
 const SEASON = "2026-2027";
 const clubLabel = (role) => CLUB_LABELS[role] || role;
@@ -97,12 +97,58 @@ function createAdminRouter(getClient, onChange = () => {}) {
     }
   });
 
-  // --- Club ---
+  // Valide une attestation puis enregistre aussitôt la signature de l'athlète : sa demande vaut consentement.
+  // (PoC : le serveur signe avec la seed de test de l'athlète. En production : son wallet, par ex. Xaman.)
+  async function issueWithConsent(client, issuerWallet, athleteWallet, type, opts) {
+    const tx = await issue(client, issuerWallet, athleteWallet.address, type, opts);
+    try {
+      await accept(client, athleteWallet, issuerWallet.address, type);
+    } catch (e) {
+      throw new HttpError(500, "Attestation émise, mais le consentement de l'athlète n'a pas pu être enregistré : " + e.message);
+    }
+    return tx;
+  }
+
+  // =================== ATHLÈTE : il initie l'adhésion et la licence ===================
+  router.post("/athlete/request", route(async (client, { athlete, club }) => {
+    const a = athleteOf(athlete);
+    const c = clubOf(club);
+    if (await getCredential(client, a.address, c.address, CLUB_MEMBER)) throw new HttpError(409, "Déjà adhérent de ce club.");
+    requests.setClub(athlete, club);
+    return { label: "Demande d'adhésion envoyée à " + clubLabel(club) };
+  }));
+
+  router.post("/athlete/request-licence", route(async (client, { athlete }) => {
+    const a = athleteOf(athlete);
+    if (await getCredential(client, a.address, wallets.federation.address, LICENCE)) throw new HttpError(409, "Vous avez déjà une licence.");
+    let adhesion = false;
+    for (const club of CLUBS) if ((await verify(client, a.address, wallets[club].address, CLUB_MEMBER)).valid) adhesion = true;
+    if (!adhesion) throw new HttpError(409, "Il faut d'abord être adhérent d'un club.");
+    requests.setLicence(athlete);
+    return { label: "Demande de licence envoyée à la fédération" };
+  }));
+
+  router.post("/athlete/cancel-request", route(async (client, { athlete, what }) => {
+    athleteOf(athlete);
+    if (what === "licence") requests.clearLicence(athlete);
+    else requests.clearClub(athlete);
+    return { label: what === "licence" ? "Demande de licence annulée" : "Demande d'adhésion annulée" };
+  }));
+
+  // =================== CLUB : valide ou refuse les demandes reçues ===================
   router.post("/club/issue", route(async (client, { club, athlete }) => {
     const c = clubOf(club), a = athleteOf(athlete);
-    const tx = await issue(client, c, a.address, CLUB_MEMBER, { expiration: SEASON_END_ISO, memo: `adhesion ${SEASON}` });
-    requests.clear(athlete); // la demande d'adhésion (hors chaîne) est traitée
+    if (requests.get(athlete).club !== club) throw new HttpError(409, "Cet athlète n'a pas demandé à rejoindre ce club : seul l'athlète peut initier son adhésion.");
+    const tx = await issueWithConsent(client, c, a, CLUB_MEMBER, { expiration: SEASON_END_ISO, memo: `adhesion ${SEASON}` });
+    requests.clearClub(athlete);
     return done("Adhésion validée par " + clubLabel(club), tx);
+  }));
+
+  router.post("/club/decline", route(async (client, { club, athlete }) => {
+    clubOf(club);
+    athleteOf(athlete);
+    if (requests.get(athlete).club === club) requests.clearClub(athlete);
+    return { label: "Demande refusée par " + clubLabel(club) };
   }));
 
   router.post("/club/revoke", route(async (client, { club, athlete }) => {
@@ -110,39 +156,26 @@ function createAdminRouter(getClient, onChange = () => {}) {
     return done("Adhésion révoquée par " + clubLabel(club), await revoke(client, c, a.address, c.address, CLUB_MEMBER, "DEPART_CLUB"));
   }));
 
-  // Demandes d'adhésion (hors chaîne) : l'athlète choisit un club, le club les voit puis valide ou refuse.
-  router.post("/athlete/request", route(async (client, { athlete, club }) => {
-    const a = athleteOf(athlete);
-    const c = clubOf(club);
-    if (await getCredential(client, a.address, c.address, CLUB_MEMBER)) throw new HttpError(409, "Déjà adhérent de ce club.");
-    requests.set(athlete, club);
-    return { label: "Demande d'adhésion envoyée à " + clubLabel(club) };
-  }));
-
-  router.post("/athlete/cancel-request", route(async (client, { athlete }) => {
-    athleteOf(athlete);
-    requests.clear(athlete);
-    return { label: "Demande d'adhésion annulée" };
-  }));
-
-  router.post("/club/decline", route(async (client, { club, athlete }) => {
-    clubOf(club);
-    athleteOf(athlete);
-    if (requests.get(athlete) === club) requests.clear(athlete);
-    return { label: "Demande refusée par " + clubLabel(club) };
-  }));
-
-  // --- Fédération ---
+  // =================== FÉDÉRATION : valide ou refuse les demandes de licence ===================
   router.post("/federation/issue-licence", route(async (client, { athlete }) => {
     const a = athleteOf(athlete);
+    if (!requests.get(athlete).licence) throw new HttpError(409, "Cet athlète n'a pas demandé de licence : seul l'athlète peut la demander.");
     // La fédération n'émet que si une adhésion valide existe, émise par un club affilié.
     let adhesion = false;
     for (const club of CLUBS) {
       if ((await verify(client, a.address, wallets[club].address, CLUB_MEMBER)).valid) adhesion = true;
     }
-    if (!adhesion) throw new HttpError(409, "Pas d'adhésion valide : un club affilié doit l'émettre et le sportif l'accepter.");
+    if (!adhesion) throw new HttpError(409, "Pas d'adhésion valide : un club affilié doit l'avoir validée.");
     const uri = recordForRole(athlete).uri;
-    return done("Licence émise par la fédération", await issue(client, wallets.federation, a.address, LICENCE, { expiration: SEASON_END_ISO, uri, memo: `licence ${SEASON}` }));
+    const tx = await issueWithConsent(client, wallets.federation, a, LICENCE, { expiration: SEASON_END_ISO, uri, memo: `licence ${SEASON}` });
+    requests.clearLicence(athlete);
+    return done("Licence validée par la fédération", tx);
+  }));
+
+  router.post("/federation/decline", route(async (client, { athlete }) => {
+    athleteOf(athlete);
+    requests.clearLicence(athlete);
+    return { label: "Demande de licence refusée par la fédération" };
   }));
 
   router.post("/federation/suspend", route(async (client, { athlete, motif }) => {
@@ -151,18 +184,42 @@ function createAdminRouter(getClient, onChange = () => {}) {
     return done("Licence suspendue par la fédération", await revoke(client, wallets.federation, a.address, wallets.federation.address, LICENCE, code));
   }));
 
-  // --- Sportif : il signe lui-même son acceptation ---
+  // Cas rare (attestation émise sans consentement automatique) : l'athlète peut encore accepter à la main.
   router.post("/athlete/accept", route(async (client, { athlete, kind, club }) => {
     const a = athleteOf(athlete);
-    if (kind === "licence") {
-      return done("Licence acceptée par le sportif", await accept(client, a, wallets.federation.address, LICENCE));
-    }
+    if (kind === "licence") return done("Licence acceptée par l'athlète", await accept(client, a, wallets.federation.address, LICENCE));
     if (kind === "membership") {
       const c = clubOf(club);
-      return done("Adhésion acceptée par le sportif", await accept(client, a, c.address, CLUB_MEMBER));
+      return done("Adhésion acceptée par l'athlète", await accept(client, a, c.address, CLUB_MEMBER));
     }
     throw new HttpError(400, "Type d'attestation inconnu.");
   }));
+
+  // L'athlète n'a jamais à "valider" : sa demande vaut consentement. Si une attestation est restée en attente
+  // (essai antérieur, accept interrompu), on enregistre sa signature automatiquement. Une erreur n'est pas retentée avant 60 s.
+  const failedAt = new Map();
+  router.consentPending = (rows) => serialize(async () => {
+    const client = await getClient();
+    let changed = false;
+    const tryAccept = async (key, athleteWallet, issuerAddress, type) => {
+      if (Date.now() - (failedAt.get(key) || 0) < 60000) return;
+      try {
+        await accept(client, athleteWallet, issuerAddress, type);
+        changed = true;
+      } catch (e) {
+        failedAt.set(key, Date.now());
+      }
+    };
+    for (const r of rows) {
+      const a = wallets[r.role];
+      if (!a) continue;
+      for (const [club, m] of Object.entries(r.memberships)) {
+        if (m && !m.accepted) await tryAccept(r.role + club, a, wallets[club].address, CLUB_MEMBER);
+      }
+      if (r.licence.reason === "non acceptée") await tryAccept(r.role + "licence", a, wallets.federation.address, LICENCE);
+    }
+    return changed;
+  });
 
   return router;
 }

@@ -29,20 +29,39 @@ window.LS = (() => {
   const fmtDate = (iso) => (iso ? new Date(iso).toLocaleString("fr-FR") : "—");
   const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString("fr-FR", { dateStyle: "long", timeZone: "UTC" }) : "—");
 
-  // ---- Navigation par profil : une entrée par acteur du système ----
-  const PROFILES = [
-    { href: "/", label: "Accueil", match: ["/", "/index.html"] },
-    { href: "/athlete.html", label: "Athlète", match: ["/athlete.html"] },
-    { href: "/club.html", label: "Club", match: ["/club.html"] },
-    { href: "/federation.html", label: "Fédération", match: ["/federation.html"] },
-    { href: "/course.html", label: "Course", match: ["/course.html"] },
+  // ---- Navigation : « Accueil » + un menu déroulant qui indique le profil (catégorie) courant ----
+  const GROUPS = [
+    { key: "athlete", label: "Athlète", items: [
+      { href: "/athlete.html", label: "Mon espace", match: ["/athlete.html"] },
+    ] },
+    { key: "club", label: "Club", items: [{ href: "/club.html", label: "Espace club", match: ["/club.html"] }] },
+    { key: "federation", label: "Fédération", items: [{ href: "/federation.html", label: "Espace fédération", match: ["/federation.html"] }] },
+    { key: "organizer", label: "Organisateur", items: [{ href: "/course.html", label: "Contrôle de course", match: ["/course.html"] }] },
   ];
   function renderNav() {
     const nav = document.getElementById("nav");
     if (!nav) return;
-    nav.replaceChildren(
-      ...PROFILES.map((p) => el("a", { href: p.href, class: p.match.includes(location.pathname) ? "active" : "" }, p.label))
-    );
+    const path = location.pathname;
+    const current = GROUPS.find((g) => g.items.some((i) => i.match.includes(path)));
+    const home = el("a", { href: "/", class: path === "/" || path === "/index.html" ? "active" : "" }, "Accueil");
+    const menu = el("details", { class: "menu" },
+      el("summary", { class: "menu-btn " + (current ? current.key : "") }, current ? current.label : "Choisir un profil", el("span", { class: "caret" }, " ▾")),
+      el("div", { class: "menu-list" }, GROUPS.map((g) =>
+        el("div", { class: "menu-group" },
+          el("div", { class: "menu-title " + g.key }, g.label),
+          g.items.map((i) => el("a", { href: i.href, class: i.match.includes(path) ? "active" : "" }, i.label))))));
+    document.addEventListener("click", (e) => { if (!menu.contains(e.target)) menu.removeAttribute("open"); });
+    nav.replaceChildren(home, menu);
+  }
+
+  // ---- Choix de la personne / du club dont on agit (mémorisé d'une page à l'autre) ----
+  const remember = (k, v) => { try { localStorage.setItem("ls." + k, v); } catch {} };
+  const recall = (k) => { try { return localStorage.getItem("ls." + k); } catch { return null; } };
+  function profileSwitch(label, options, value, onPick) {
+    const select = el("select", { "aria-label": label }, options.map((o) => el("option", { value: o.value }, o.label)));
+    select.value = value;
+    select.addEventListener("change", () => onPick(select.value));
+    return el("div", { class: "actas" }, el("span", {}, label), select);
   }
 
   // ---- Pastille d'acteur (qui fait l'action) ----
@@ -152,5 +171,5 @@ window.LS = (() => {
   }
 
   document.addEventListener("DOMContentLoaded", renderNav);
-  return { toolbar, norm, addrLink, renderHistory, el, getJson, post, short, fmtDate, fmtDay, renderNav, actorChip, toast, act, actionButton, every, isBusy };
+  return { remember, recall, profileSwitch, toolbar, norm, addrLink, renderHistory, el, getJson, post, short, fmtDate, fmtDay, renderNav, actorChip, toast, act, actionButton, every, isBusy };
 })();

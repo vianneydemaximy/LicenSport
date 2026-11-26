@@ -1,8 +1,8 @@
 // Espace club : demandes d'adhésion reçues, adhérents, recherche d'un athlète.
-const { el, getJson, actorChip, act, actionButton, addrLink } = LS;
+const { el, getJson, actorChip, act, actionButton, addrLink, profileSwitch, remember, recall } = LS;
 
 let cfg = null;
-let club = new URLSearchParams(location.search).get("club");
+let club = new URLSearchParams(location.search).get("club") || recall("club");
 let rowsCache = [];
 const list = el("div");
 const bar = LS.toolbar({ placeholder: "Rechercher un athlète par nom…", onChange: () => draw() });
@@ -22,9 +22,9 @@ function tag(kind, text) {
 function person(r, st) {
   const statusTag = { member: tag("ok", "Adhérent"), pending: tag("ko", "En attente de l'athlète"), request: tag("ko", "Demande d'adhésion"), none: tag("na", "Pas adhérent") }[st];
   const buttons = [];
-  if (st === "request" || st === "none") {
+  if (st === "request") {
     buttons.push(actionButton("Valider l'adhésion", { onClick: () => act("/club/issue", { club, athlete: r.role }, refresh), disabled: !cfg.admin }));
-    if (st === "request") buttons.push(actionButton("Refuser", { danger: true, onClick: () => act("/club/decline", { club, athlete: r.role }, refresh), disabled: !cfg.admin }));
+    buttons.push(actionButton("Refuser", { danger: true, onClick: () => act("/club/decline", { club, athlete: r.role }, refresh), disabled: !cfg.admin }));
   } else {
     buttons.push(actionButton(st === "member" ? "Révoquer (départ)" : "Annuler", { danger: true, onClick: () => act("/club/revoke", { club, athlete: r.role }, refresh), disabled: !cfg.admin }));
   }
@@ -39,7 +39,8 @@ function person(r, st) {
 }
 
 function draw() {
-  const withState = rowsCache.map((r) => ({ r, st: stateOf(r) }));
+  // Un club ne voit que les athlètes liés à lui : demandeurs, adhésions en attente, adhérents.
+  const withState = rowsCache.map((r) => ({ r, st: stateOf(r) })).filter((x) => x.st !== "none");
   const count = (st) => withState.filter((x) => x.st === st).length;
   bar.setFilters([
     { key: "all", label: "Tous", count: withState.length },
@@ -55,7 +56,7 @@ function draw() {
   const shown = visible.slice(0, bar.state.limit);
   list.replaceChildren(
     ...[...shown.map((x) => person(x.r, x.st)),
-    visible.length === 0 ? el("p", { class: "muted" }, "Aucun athlète ne correspond.") : null,
+    visible.length === 0 ? el("p", { class: "muted" }, withState.length ? "Aucun athlète ne correspond." : "Aucune demande ni adhérent pour l'instant. Les athlètes demandent à rejoindre le club depuis leur espace.") : null,
     visible.length > shown.length
       ? (() => { const b = el("button", { type: "button", class: "link" }, `Voir plus (${visible.length - shown.length})`); b.addEventListener("click", () => { bar.state.limit += 6; draw(); }); return b; })()
       : null].filter(Boolean)
@@ -70,17 +71,18 @@ async function refresh() {
 (async () => {
   cfg = await getJson("/api/config");
   if (!cfg.clubs[club]) club = Object.keys(cfg.clubs)[0];
+  remember("club", club);
   const info = cfg.clubs[club];
 
   // Le cadre (recherche, filtres) est construit une seule fois : seule la liste est rafraîchie,
   // pour ne pas perdre le texte saisi ni le focus.
   document.getElementById("page").replaceChildren(
     el("h1", {}, info.label + " ", actorChip("club")),
-    el("div", { class: "tabs" }, Object.entries(cfg.clubs).map(([k, c]) => el("a", { href: `/club.html?club=${k}`, class: k === club ? "active" : "" }, c.label))),
+    profileSwitch("Vous agissez en tant que", Object.entries(cfg.clubs).map(([k, c]) => ({ value: k, label: c.label })), club, (v) => { remember("club", v); location.search = `?club=${v}`; }),
     el("div", { class: "card" },
-      el("p", { class: "lead", style: "margin:0 0 8px" }, "Les athlètes demandent à rejoindre un club ; le club valide leur adhésion, puis ils l'acceptent. Vous pouvez aussi rechercher un athlète pour valider son adhésion directement."),
+      el("p", { class: "lead", style: "margin:0 0 8px" }, "C'est l'athlète qui choisit son club et envoie une demande. Le club la valide ou la refuse ; en cas de validation, la signature de l'athlète (son consentement) est enregistrée automatiquement."),
       el("div", { class: "small muted" }, "Adresse du club : ", addrLink(info.address, cfg.explorer))),
-    el("h2", {}, "Athlètes"),
+    el("h2", {}, "Demandes et adhérents"),
     el("div", { class: "toolbar" }, bar.input, bar.chips),
     list
   );

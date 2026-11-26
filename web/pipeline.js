@@ -13,11 +13,13 @@ function renderPipeline(container, p, { compact = false } = {}) {
   };
   const ACTOR = { club: "Club", athlete: "Athlète", federation: "Fédération", organizer: "Organisateur" };
 
+  const hasMembership = !!m;
+  const membershipOk = !!m && m.accepted;
   const steps = [
-    { actor: "club", title: "Valide l'adhésion", detail: m ? m.label : p.request ? `demande envoyée à ${p.request.label}` : "aucun club", done: !!m },
-    { actor: "athlete", title: "Accepte l'adhésion", detail: m && m.accepted ? "consentement donné" : "consentement requis", done: !!m && m.accepted },
-    { actor: "federation", title: "Émet la licence", detail: licenceExists ? "licence émise" : "pas encore émise", done: licenceExists },
-    { actor: "athlete", title: "Accepte la licence", detail: licenceExists && l.accepted ? "consentement donné" : "consentement requis", done: licenceExists && l.accepted },
+    { actor: "athlete", title: "Demande l'adhésion", detail: m ? "demande faite" : p.request ? `demande à ${p.request.label}` : "choisir un club", done: hasMembership || !!p.request },
+    { actor: "club", title: "Valide l'adhésion", detail: membershipOk ? m.label : m ? "finalisation en cours" : p.request ? "en attente du club" : "après la demande", done: membershipOk },
+    { actor: "athlete", title: "Demande la licence", detail: licenceExists ? "demande faite" : p.licenceRequest ? "demande envoyée" : membershipOk ? "à demander" : "après l'adhésion", done: licenceExists || !!p.licenceRequest },
+    { actor: "federation", title: "Valide la licence", detail: licenceExists && l.accepted ? "licence émise" : licenceExists ? "finalisation en cours" : p.licenceRequest ? "en attente de la fédération" : "après la demande", done: licenceExists && l.accepted },
     { actor: "organizer", title: "Contrôle de course", detail: l.valid ? "reconnue, quel que soit le club" : REASON[l.reason] || l.reason, done: l.valid },
   ];
   const currentIndex = steps.findIndex((s) => !s.done);

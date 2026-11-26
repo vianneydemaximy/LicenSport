@@ -51,7 +51,7 @@ async function verifyLicence(subject) {
 }
 
 
-/** Adhésion du sportif dans CHAQUE club : { clubA: état|null, clubB: état|null } (lu dans le registre). */
+/** Adhésion du sportif dans CHAQUE club : { clubA: état|null, clubB: ..., clubC: ... } (lu dans le registre). */
 async function membershipsOf(subject) {
   const client = await getClient();
   const addrs = publicAddresses();
@@ -76,15 +76,23 @@ async function pipelineOf(subject) {
 }
 
 /** Vue d'ensemble de tous les sportifs de démonstration (pages fédération, clubs, course). */
-async function computeOverview() {
+let adminRouter = null;
+
+async function computeOverviewRaw() {
   return Promise.all(
     listAthletes().map(async (a) => {
       const p = await pipelineOf(a.address);
-      // Demande d'adhésion en cours (hors chaîne) : disparaît dès que le club a validé.
-      let askedClub = requests.get(a.role);
+      // Demandes en cours (hors chaîne) : elles disparaissent dès que le club / la fédération a validé.
+      const asked = requests.get(a.role);
+      let askedClub = asked.club;
       if (askedClub && p.memberships[askedClub]) {
-        requests.clear(a.role);
+        requests.clearClub(a.role);
         askedClub = null;
+      }
+      let licenceRequest = asked.licence;
+      if (licenceRequest && p.licence.reason !== "absente ou révoquée") {
+        requests.clearLicence(a.role);
+        licenceRequest = false;
       }
       return {
         role: a.role,
@@ -92,10 +100,18 @@ async function computeOverview() {
         address: a.address,
         photoUrl: `/api/people/${a.role}/photo`,
         request: askedClub ? { club: askedClub, label: CLUB_LABELS[askedClub] } : null,
+        licenceRequest,
         ...p,
       };
     })
   );
+}
+
+async function computeOverview() {
+  const rows = await computeOverviewRaw();
+  // Mode démo : finalise le consentement des attestations restées en attente, puis relit l'état.
+  if (adminRouter && (await adminRouter.consentPending(rows).catch(() => false))) return computeOverviewRaw();
+  return rows;
 }
 
 // Court cache : plusieurs onglets ouverts ne multiplient pas les requêtes vers le Testnet public.
@@ -194,7 +210,8 @@ app.get("/api/qr/:subject", async (req, res) => {
 
 if (ADMIN) {
   try {
-    app.use("/api/admin", require("./admin").createAdminRouter(getClient, invalidateOverview));
+    adminRouter = require("./admin").createAdminRouter(getClient, invalidateOverview);
+    app.use("/api/admin", adminRouter);
     console.log("Mode DEMO actif : actions fédération, clubs et athlètes possibles depuis localhost uniquement.");
   } catch (e) {
     console.error("Mode démo impossible (seeds manquantes dans .env ?) :", e.message);
