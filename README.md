@@ -1,259 +1,108 @@
-# XRPL Developer Training — June 22–23, 2026
+# LicenSport
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/XRPL-Commons/dev-training-june-2026?geo=EuropeWest)
+**La licence sportive vérifiable par tous, qui suit le sportif de club en club.**
 
-This repository is the hands-on environment for the XRPL Commons developer training. Participants work from scaffolded exercises in their language of choice and verify their results live on the XRPL Testnet.
+Projet du Blockchain Challenge XRPL (sujet : Certification). Une fédération émet des licences sous forme de **Credentials XRPL (XLS-70)**. Un arbitre, un organisateur ou un assureur les vérifie en quelques secondes en scannant un QR code, sans accès aux systèmes de la fédération.
 
-> ⏳ **Heads up:** Opening a Codespace for the first time can take several minutes. Click the button above as soon as you can and let it load in the background while the session intro is running.
+- **Réseau** : XRPL **Testnet** uniquement (`wss://s.altnet.rippletest.net:51233`). Aucun smart contract : tout repose sur la brique native Credentials.
+- **Explorateur** : <https://testnet.xrpl.org>
 
----
+## Pourquoi la blockchain
 
-## What is in this repo
-
-```
-.
-├── .devcontainer/        Codespaces setup
-├── scripts/              Wallet minting
-├── exercises/
-│   ├── js/               JavaScript exercises
-│   ├── python/           Python exercises
-│   └── java/             Java exercises
-├── wallets.json          Auto-generated on Codespace start
-└── README.md
-```
-
-Complete solutions live on the `solutions` branch.
-
----
-
-## Getting started
-
-Click the Codespaces button above and wait for the environment to finish starting. This can take **several minutes** on a cold start, it is normal.
-
-> **Prebuild note:**
-> - Dependencies are already installed, the environment loads faster than a standard Codespace
-> - Wallet minting still runs only when your individual Codespace starts, so your wallets stay unique to you
-
-The Codespace automatically:
-
-- installs JavaScript, Python, and Java dependencies
-- creates two funded XRPL Testnet wallets
-- saves them to `wallets.json`
-
-If wallet minting fails on startup, re-run it manually:
-
-```bash
-node scripts/mint-wallets.js
-```
-
----
-
-## Wallets
-
-After startup, `wallets.json` contains two funded Testnet wallets:
-
-- **Wallet 1:** sender, issuer, minter
-- **Wallet 2:** receiver, holder
-
-If your Codespace is stopped and restarted between exercises, it will re-mint wallets and overwrite `wallets.json`. To preserve continuity (trust lines, etc.), avoid restarting, or keep a copy of your previous `wallets.json` and restore it after restart.
-
-> ⚠️ **Important:**
-> - These are Testnet wallets only
-> - Never reuse Testnet seeds on Mainnet
-> - If you must re-mint, run `node scripts/mint-wallets.js`, but note this will reset your on-chain state (trust lines, AMM pools, etc.)
-
----
-
-## Pick a language
-
-Choose the language you are most comfortable with. All exercises cover the same content.
-
-| Language | Folder | Run pattern |
+| Critère | Base de données d'une fédération | LicenSport sur XRPL |
 |---|---|---|
-| JavaScript | `exercises/js/` | `node exercises/js/file-name.js` |
-| Python | `exercises/python/` | `python exercises/python/file_name.py` |
-| Java | `exercises/java/` | `cd exercises/java && mvn compile exec:java -Dexec.mainClass="academy.xrpl.ClassName"` |
+| Vérification par un tiers | API à négocier avec chaque fédération | Lecture publique du registre, sans compte ni accord |
+| Preuve de l'émetteur | Il faut croire le serveur qui répond | Signature de l'adresse publique de la fédération |
+| Suspension / révocation | Visible seulement par qui a accès à la base | Publique et datée dès la transaction validée |
+| Historique | Modifiable ou perdu par l'administrateur | Inaltérable, consultable dans l'explorateur |
+| Consentement du sportif | Aucun | Le sportif accepte sa licence (`CredentialAccept`) |
 
-> Java dependencies are downloaded on the first `mvn compile`, which can take a few minutes. Run it once before the coding session starts.
+**Limites assumées** : la blockchain prouve qu'une licence est authentique, pas que la personne présente en est la titulaire (d'où la photo contrôlée par empreinte). Si la fédération émet à tort, la chaîne l'enregistre fidèlement : la confiance dans l'émetteur reste nécessaire, mais elle devient vérifiable. Une suspension supprime le credential ; lever une suspension revient à en émettre un nouveau.
 
-> **Java users:** before running each exercise, reset your terminal to the repo root first:
-> ```bash
-> cd ~ && cd /workspaces/dev-training-june-2026
-> ```
+## Architecture
 
----
-
-## Exercise commands
-
-### Day 1: Send XRP
-
-```bash
-node exercises/js/day1-send-xrp.js
-python exercises/python/day1_send_xrp.py
-cd exercises/java && mvn compile exec:java -Dexec.mainClass="academy.xrpl.Day1SendXrp"
+```
+Navigateur (web/)  ->  API Express (server/, lecture seule, sans seed)  ->  XRPL Testnet
+                              |
+                     données hors chaîne (server/data : nom, photo, dossier)
 ```
 
-Success signal: `tesSUCCESS` and an Explorer link.
-
-### Homework: NFT Lifecycle
-
-```bash
-node exercises/js/homework-nft.js
-python exercises/python/homework_nft.py
-cd exercises/java && mvn compile exec:java -Dexec.mainClass="academy.xrpl.HomeworkNft"
-```
-
-Success signal: NFT mint succeeds, appears on-chain, then is burned.
-
-> Complete this between Day 1 and Day 2.
-
-### Day 2 Step 1: Setup Account
-
-```bash
-node exercises/js/day2-step1-setup-account.js
-python exercises/python/day2_step1_setup_account.py
-cd exercises/java && mvn compile exec:java -Dexec.mainClass="academy.xrpl.Day2Step1SetupAccount"
-```
-
-Success signal: issuer account enables `Default Ripple`.
-
-### Day 2 Step 2: Issue Token
-
-```bash
-node exercises/js/day2-step2-issue-token.js
-python exercises/python/day2_step2_issue_token.py
-cd exercises/java && mvn compile exec:java -Dexec.mainClass="academy.xrpl.Day2Step2IssueToken"
-```
-
-Success signal: holder trust line exists and receives the issued token.
-
-### Day 2 Step 3: Create AMM
-
-Prerequisite: complete Step 1 and Step 2 first.
-
-```bash
-node exercises/js/day2-step3-create-amm.js
-python exercises/python/day2_step3_create_amm.py
-cd exercises/java && mvn compile exec:java -Dexec.mainClass="academy.xrpl.Day2Step3CreateAmm"
-```
-
-Success signal: `AMMCreate` succeeds and the pool exists on Testnet.
-
----
-
-## Workshop flow
-
-### Day 1 — June 22, 2026
-
-| Time (CEST) | Activity | Exercise |
-|---|---|---|
-| 15:00 – 15:30 | Welcome & intro | — |
-| 15:30 – 16:30 | Blockchain 101 + quiz | — |
-| 16:30 – 16:45 | Break | — |
-| 16:45 – 17:30 | XRPL 101 + What's new + quiz | — |
-| 17:30 – 18:00 | Coding session I | `day1-send-xrp` |
-| 18:00 – 18:30 | Q&A + homework briefing | `homework-nft` |
-
-### Day 2 — June 23, 2026
-
-| Time (CEST) | Activity | Exercise |
-|---|---|---|
-| 15:00 – 15:30 | Greeting & homework review | — |
-| 15:30 – 15:55 | Keynote: Spawning Liquidity on the XRP Ledger + quiz | — |
-| 15:55 – 16:00 | Break | — |
-| 16:00 – 17:30 | Coding session II — Step 1: setup account | `day2-step1-setup-account` |
-| | Coding session II — Step 2: issue token | `day2-step2-issue-token` |
-| | Coding session II — Step 3: create an AMM | `day2-step3-create-amm` |
-| 17:30 – 17:45 | Break | — |
-| 17:45 – 18:00 | Alumni testimonial | — |
-| 18:00 – 18:30 | Q&A + closing remarks | — |
-
----
-
-## Stuck? Get help
-
-If you are blocked at any point:
-
-- Post your question in the **training Google Chat space**, mentors are monitoring it throughout both days.
-- Mentors can see your on-chain activity and will be able to tell which step you are on and help you debug.
-- If needed, a mentor will invite you to a Zoom breakout room for 1-on-1 support.
-
----
-
-## Troubleshooting
-
-| Problem | What to do |
+| Sur la chaîne | Hors chaîne (serveur) |
 |---|---|
-| Codespace takes a long time to start | This is normal, it can take several minutes on a cold start. Wait it out. |
-| Wallet minting fails | Retry `node scripts/mint-wallets.js` after a short wait. |
-| Java build is slow on first run | Run `mvn compile` once and wait for dependencies to download. |
-| Java `cd` error between exercises | Reset your terminal to the repo root: `cd ~ && cd /workspaces/dev-training-june-2026` |
-| WebSocket connection fails | Retry on a different network, corporate firewalls sometimes block WebSockets. |
-| Day 2 Step 3 fails | Make sure you completed Step 1 and Step 2 first, using the same wallets. |
+| Adresses de la fédération, des clubs, des sportifs | Nom, photo, dossier d'inscription |
+| Type d'attestation, date d'expiration | Le certificat médical n'existe nulle part dans le projet (« dossier complet » uniquement) |
+| Une empreinte SHA-256 dans le champ `URI` | |
 
----
+Briques XRPL utilisées : `CredentialCreate`, `CredentialAccept`, `CredentialDelete`, champ `Expiration` (expiration en fin de saison, le 30 juin), champ `URI` (empreinte du manifeste photo + dossier), `Memos` (saison, motif de suspension codé), `ledger_entry` (vérification) et `account_tx` (historique).
 
-## Solutions
+Deux types de credentials : `CLUB_MEMBER` (émis par un club affilié) et `LICENCE_2026` (émis par la fédération).
 
-If you are truly stuck after asking for help, complete solutions are available on the `solutions` branch. Try the exercise first, solutions are a last resort.
+## Sécurité et clés
+
+- Comptes de **test uniquement**, créés par le faucet. Les seeds sont dans `.env`, ignoré par Git. Jamais de seed Mainnet.
+- L'API publique ne contient **aucune seed** : elle ne fait que lire le registre.
+- L'émetteur attendu (la fédération) est fixé côté serveur, **jamais lu dans la requête** : sinon n'importe qui pourrait se faire passer pour la fédération.
+- Les clubs affiliés sont une liste connue de la fédération : elle n'émet une licence que si l'adhésion vient d'un de ces clubs.
+- Le nom et la photo ne sont servis que si la licence est valide. Le QR code ne contient qu'une URL avec l'adresse du sportif.
+- Dans le PoC, le sportif signe avec une seed de test. **En production** : un wallet non déposé (Xaman) et une multisignature pour le compte de la fédération.
+
+## Installation
+
+Prérequis : Node.js LTS.
 
 ```bash
-git checkout solutions -- solutions/
+npm install
+cp .env.example .env
+npm run setup        # crée les 5 comptes Testnet via le faucet et remplit .env
 ```
 
-This copies the solution files into your `solutions/` folder without overwriting your work in `exercises/`.
+Une seule personne lance `npm run setup`, puis partage le `.env` en privé aux autres. Ne pas le relancer avec `--force` sans prévenir l'équipe : les adresses changeraient.
 
----
+## Lancement
 
-## Network reference
+```bash
+npm start            # http://localhost:3000
+npm run demo         # scénario complet en ligne de commande (~1 min)
+npm run check        # test de faisabilité des Credentials sur le Testnet
+```
 
-| Item | Value |
+Pour scanner le QR code avec un téléphone (même Wi-Fi) : `PUBLIC_URL=http://<IP-du-PC>:3000 npm start`.
+
+## Adresses de test (Testnet)
+
+| Rôle | Adresse |
 |---|---|
-| Network | XRPL Testnet |
-| WebSocket | `wss://s.altnet.rippletest.net:51233` |
-| JSON-RPC | `https://s.altnet.rippletest.net:51234` |
-| Explorer | `https://testnet.xrpl.org` |
-| Faucet | `https://faucet.altnet.rippletest.net/accounts` |
+| Fédération | [`raTf3i2jq28R4D9oJXVAMo2gG9WXqJvtup`](https://testnet.xrpl.org/accounts/raTf3i2jq28R4D9oJXVAMo2gG9WXqJvtup) |
+| Club A | [`rLbSjF3sc2UZf1DL3G4Nf5bTHMR3rEb8tY`](https://testnet.xrpl.org/accounts/rLbSjF3sc2UZf1DL3G4Nf5bTHMR3rEb8tY) |
+| Club B | [`rBCxDUmPo4vuFYCwrsPx5xbwPnw6CT1e5a`](https://testnet.xrpl.org/accounts/rBCxDUmPo4vuFYCwrsPx5xbwPnw6CT1e5a) |
+| Sportif 1 (Camille Martin, fictif) | [`rMCLSRGnGYBs7djdQhemM5mzFeXdHJnjZR`](https://testnet.xrpl.org/accounts/rMCLSRGnGYBs7djdQhemM5mzFeXdHJnjZR) |
+| Sportif 2 (Alex Bernard, fictif) | [`rs69qe1YaUwYWb76zfEQGFLf8dAxADXJrL`](https://testnet.xrpl.org/accounts/rs69qe1YaUwYWb76zfEQGFLf8dAxADXJrL) |
 
----
+Les données personnelles du dépôt sont fictives.
 
-## Reference materials
+## Scénario de démonstration
 
-### Start here
+1. **Adhésion** : le club A émet l'attestation « adhérent » (`CredentialCreate`), le sportif l'accepte (`CredentialAccept`).
+2. **Licence** : la fédération vérifie l'adhésion et l'affiliation du club, émet la licence avec expiration au 30 juin 2027 et l'empreinte du dossier et de la photo, puis le sportif l'accepte.
+3. **Contrôle par QR code** : ouvrir <http://localhost:3000>, scanner ou cliquer sur le sportif 1. La page lit le registre : « LICENCE VALIDE », émetteur reconnu, photo conforme.
+4. **Changement de club** : le club A révoque l'adhésion (`CredentialDelete`), le club B en émet une. L'historique reste visible dans la page et dans l'explorateur.
+5. **Suspension** : la fédération révoque la licence (`CredentialDelete`, motif en Memo). La page de vérification passe d'elle-même (toutes les 5 s) à « LICENCE NON VALIDE ».
 
-- [XRPL Commons Learning Portal](https://learn.xrpl-commons.org/), guided courses and workshop-friendly explanations
-- [Intro to the XRPL](https://learn.xrpl-commons.org/course/intro-to-the-xrpl/), broad protocol overview
-- [XRPL Docs](https://xrpl.org/docs), official transaction, API, and network references
-- [XRPLF GitHub Organization](https://github.com/XRPLF), SDKs, examples, and core project source
-- [XRPL Testnet Explorer](https://testnet.xrpl.org), confirm your results on-chain after each exercise
+Pour la jouer en direct : `npm start` dans un terminal, la page de vérification ouverte, puis `npm run demo` dans un autre. Chaque transaction affiche son lien dans l'explorateur.
 
-### Exercise-by-exercise links
+## Structure du dépôt
 
-| Exercise | Learning Portal | XRPL Docs | SDKs |
-|---|---|---|---|
-| `day1-send-xrp` | [Create Accounts and Send XRP](https://learn.xrpl-commons.org/course/blockchain-foundations-for-web2-developers/lesson/create-accounts-and-send-xrp/) | [Payment transaction](https://xrpl.org/docs/references/protocol/transactions/types/payment) | [xrpl.js](https://js.xrpl.org), [xrpl-py](https://xrpl-py.readthedocs.io/en/stable/) |
-| `homework-nft` | [Mint and Burn NFTs](https://learn.xrpl-commons.org/course/code-with-the-xrpl/lesson/mint-and-burn-nfts/) | [NFTokenMint](https://xrpl.org/docs/references/protocol/transactions/types/nftokenmint), [NFTokenBurn](https://xrpl.org/docs/references/protocol/transactions/types/nftokenburn) | [xrpl.js](https://js.xrpl.org), [xrpl-py](https://xrpl-py.readthedocs.io/en/stable/) |
-| `day2-step1-setup-account` | [Code with XRPL](https://learn.xrpl-commons.org/course/code-with-the-xrpl/) | [AccountSet transaction](https://xrpl.org/docs/references/protocol/transactions/types/accountset) | [xrpl.js](https://js.xrpl.org), [xrpl-py](https://xrpl-py.readthedocs.io/en/stable/), [xrpl4j](https://github.com/XRPLF/xrpl4j) |
-| `day2-step2-issue-token` | [Create Trust Line and Send Currency](https://learn.xrpl-commons.org/course/code-with-the-xrpl/lesson/create-trustline-and-send-currency/) | [TrustSet](https://xrpl.org/docs/references/protocol/transactions/types/trustset), [Payment](https://xrpl.org/docs/references/protocol/transactions/types/payment) | [xrpl.js](https://js.xrpl.org), [xrpl-py](https://xrpl-py.readthedocs.io/en/stable/), [xrpl4j](https://github.com/XRPLF/xrpl4j) |
-| `day2-step3-create-amm` | [What is an AMM?](https://learn.xrpl-commons.org/course/deep-dive-into-xrpl-defi/lesson/what-is-an-automated-market-maker-amm/) | [AMMCreate](https://xrpl.org/docs/references/protocol/transactions/types/ammcreate), [amm_info](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/path-and-order-book-methods/amm_info) | [xrpl.js](https://js.xrpl.org), [xrpl-py](https://xrpl-py.readthedocs.io/en/stable/), [xrpl4j](https://github.com/XRPLF/xrpl4j) |
+```
+lib/          cœur XRPL : config, credentials (issue, accept, revoke, verify, history), hash, hors chaîne
+server/       API Express de vérification (lecture seule) et données hors chaîne fictives
+web/          pages de vérification (QR code) et d'accueil
+scripts/      setup-accounts, check-credentials, demo
+docs/         contrat d'interface, adresses publiques de test
+exercises/    exercices de la formation XRPL (hors projet)
+```
 
-### SDKs
+Le format de réponse de la vérification et les signatures des fonctions sont décrits dans [docs/contrat-interface.md](docs/contrat-interface.md).
 
-- [xrpl.js docs](https://js.xrpl.org) and [xrpl.js repo](https://github.com/XRPLF/xrpl.js)
-- [xrpl-py docs](https://xrpl-py.readthedocs.io/en/stable/) and [xrpl-py repo](https://github.com/XRPLF/xrpl-py)
-- [xrpl4j repo](https://github.com/XRPLF/xrpl4j), Java library and examples
-- [xrpl-connect](https://github.com/XRPL-Commons/xrpl-connect), XRPL Commons' wallet connection toolkit
-- [XRPLF GitHub](https://github.com/XRPLF), SDKs, examples, and core project source
+## Équipe
 
----
-
-## Further reading
-
-- [XRPL Commons Learning Portal](https://learn.xrpl-commons.org/)
-- [XRPL Docs](https://xrpl.org/docs)
-- [xrpl.js](https://js.xrpl.org)
-- [xrpl-py](https://xrpl-py.readthedocs.io/en/stable/)
-- [xrpl4j](https://github.com/XRPLF/xrpl4j)
-- [XRPLF GitHub Organization](https://github.com/XRPLF)
-- [XRPL Dev Portal Repo](https://github.com/XRPLF/xrpl-dev-portal)
-- [XRPL Testnet Explorer](https://testnet.xrpl.org)
+Inès Haller, Vianney de Maximy, Amélie Dupouy, Maxence Ribaute-Picard.
