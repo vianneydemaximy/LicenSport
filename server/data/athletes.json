@@ -1,13 +1,13 @@
 {
-  "_note": "Données hors chaîne, FICTIVES. Jamais publiées sur XRPL : seule l'empreinte (SHA-256) du manifeste l'est. Le certificat médical n'existe pas ici, même pas en empreinte : on atteste seulement 'dossier complet'.",
+  "_note": "Données hors chaîne. Jamais publiées sur XRPL : seule l'empreinte (SHA-256) du manifeste l'est. Le certificat médical n'existe pas ici, même pas en empreinte : on atteste seulement 'dossier complet'.",
   "athlete1": {
-    "name": "Camille Martin",
-    "photo": "athlete1.svg",
+    "name": "Vianney de Maximy",
+    "photo": "vianney.jpeg",
     "dossier": { "complet": true, "saison": "2026-2027" }
   },
   "athlete2": {
-    "name": "Alex Bernard",
-    "photo": "athlete2.svg",
+    "name": "Inès Haller",
+    "photo": "ines.jpeg",
     "dossier": { "complet": true, "saison": "2026-2027" }
   }
 }

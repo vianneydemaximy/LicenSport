@@ -75,10 +75,10 @@ Pour scanner le QR code avec un téléphone (même Wi-Fi) : `PUBLIC_URL=http://<
 | Fédération | [`raTf3i2jq28R4D9oJXVAMo2gG9WXqJvtup`](https://testnet.xrpl.org/accounts/raTf3i2jq28R4D9oJXVAMo2gG9WXqJvtup) |
 | Club A | [`rLbSjF3sc2UZf1DL3G4Nf5bTHMR3rEb8tY`](https://testnet.xrpl.org/accounts/rLbSjF3sc2UZf1DL3G4Nf5bTHMR3rEb8tY) |
 | Club B | [`rBCxDUmPo4vuFYCwrsPx5xbwPnw6CT1e5a`](https://testnet.xrpl.org/accounts/rBCxDUmPo4vuFYCwrsPx5xbwPnw6CT1e5a) |
-| Sportif 1 (Camille Martin, fictif) | [`rMCLSRGnGYBs7djdQhemM5mzFeXdHJnjZR`](https://testnet.xrpl.org/accounts/rMCLSRGnGYBs7djdQhemM5mzFeXdHJnjZR) |
-| Sportif 2 (Alex Bernard, fictif) | [`rs69qe1YaUwYWb76zfEQGFLf8dAxADXJrL`](https://testnet.xrpl.org/accounts/rs69qe1YaUwYWb76zfEQGFLf8dAxADXJrL) |
+| Sportif 1 (Vianney de Maximy) | [`rMCLSRGnGYBs7djdQhemM5mzFeXdHJnjZR`](https://testnet.xrpl.org/accounts/rMCLSRGnGYBs7djdQhemM5mzFeXdHJnjZR) |
+| Sportif 2 (Inès Haller) | [`rs69qe1YaUwYWb76zfEQGFLf8dAxADXJrL`](https://testnet.xrpl.org/accounts/rs69qe1YaUwYWb76zfEQGFLf8dAxADXJrL) |
 
-Les données personnelles du dépôt sont fictives.
+Les sportifs sont des membres de l'équipe, qui ont donné leur accord pour la démonstration : leur nom et leur photo restent **hors chaîne** (serveur), seule une empreinte SHA-256 est publiée sur XRPL.
 
 ## Scénario de démonstration
 

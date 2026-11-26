@@ -25,6 +25,10 @@ async function main() {
     grid.append(card);
   }
 
+  const phone = document.getElementById("phone");
+  phone.hidden = false;
+  phone.textContent = `Les QR codes ouvrent ${cfg.baseUrl}. Pour les scanner avec un téléphone, il doit être sur le même Wi-Fi que cet ordinateur.`;
+
   const footer = document.getElementById("footer");
   footer.append(`Réseau : ${cfg.network} · Fédération émettrice : `);
   footer.append(el("a", { href: cfg.federationLink, target: "_blank", rel: "noopener" }, cfg.federation));

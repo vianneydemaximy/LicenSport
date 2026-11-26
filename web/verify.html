@@ -7,10 +7,15 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header><a href="/">LicenSport</a><small>vérification de licence</small></header>
+  <header>
+    <nav><a href="/">Accueil</a><a href="/course.html">Contrôle de course</a><a href="/admin.html">Gestion</a></nav>
+    <a href="/">LicenSport</a><small>vérification de licence</small>
+  </header>
   <main>
     <div id="status" class="status wait"><div class="big">Vérification…</div></div>
-    <div id="holder"></div>
+    <h2>Parcours de la licence</h2>
+    <div id="pipeline"></div>
+    <div id="holder" style="margin-top:16px"></div>
     <div class="card" style="margin-top:16px">
       <dl id="details"></dl>
       <div class="notice">La blockchain prouve que la licence est authentique, pas que la personne présente en est la titulaire : comparez la photo avec le sportif.</div>
@@ -19,6 +24,7 @@
     <div class="card"><ul class="timeline" id="history"><li class="muted">Chargement…</li></ul></div>
     <footer id="footer"></footer>
   </main>
+  <script src="pipeline.js"></script>
   <script src="verify.js"></script>
 </body>
 </html>

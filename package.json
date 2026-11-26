@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node server/index.js",
+    "admin": "node server/index.js --admin",
     "demo": "node scripts/demo.js",
     "setup": "node scripts/setup-accounts.js",
     "check": "node scripts/check-credentials.js",

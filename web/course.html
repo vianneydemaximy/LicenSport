@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contrôle de course - LicenSport</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav><a href="/">Accueil</a><a href="/course.html">Contrôle de course</a><a href="/admin.html">Gestion</a></nav>
+    <a href="/">LicenSport</a><small>contrôle de course</small>
+  </header>
+  <main>
+    <h1>Départ de la course : contrôle des licences</h1>
+    <p class="lead">L'organisateur n'appelle ni les clubs ni la fédération : il lit le registre public. La licence est reconnue <strong>quel que soit le club</strong> du coureur, parce que seule compte la signature de la fédération.</p>
+    <div id="summary" class="status wait summary"><div class="big">Contrôle en cours…</div></div>
+    <div id="runners"></div>
+    <div class="notice">Ce que vérifie l'organisateur : licence signée par la fédération, acceptée par le sportif, non expirée, photo conforme à l'empreinte. Le club n'est affiché qu'à titre d'information.</div>
+    <footer id="footer"></footer>
+  </main>
+  <script src="pipeline.js"></script>
+  <script src="course.js"></script>
+</body>
+</html>

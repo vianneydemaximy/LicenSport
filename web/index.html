@@ -7,11 +7,25 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header><a href="/">LicenSport</a><small>la licence sportive vérifiable par tous</small></header>
+  <header>
+    <nav><a href="/">Accueil</a><a href="/course.html">Contrôle de course</a><a href="/admin.html">Gestion</a></nav>
+    <a href="/">LicenSport</a><small>la licence sportive vérifiable par tous</small>
+  </header>
   <main>
-    <h1>Licences de démonstration</h1>
-    <p class="lead">Scannez le QR code d'un sportif pour contrôler sa licence directement dans le registre public XRPL, sans contacter la fédération.</p>
+    <h1>La licence qui suit le sportif de club en club</h1>
+    <p class="lead">Le club valide l'adhésion, la fédération émet la licence, et n'importe quel organisateur la vérifie dans le registre public XRPL, sans contacter personne.</p>
+
+    <div class="flow">
+      <div class="box">Le club valide l'adhésion</div><div class="arrow">›</div>
+      <div class="box fed">La fédération émet la licence</div><div class="arrow">›</div>
+      <div class="box">Le sportif accepte</div><div class="arrow">›</div>
+      <div class="box">La course contrôle (QR code)</div>
+    </div>
+    <p style="text-align:center"><a class="btn" href="/course.html">Voir le contrôle de course</a></p>
+
+    <h2>Licences de démonstration (scannez le QR code)</h2>
     <div class="grid" id="athletes"><p class="muted">Chargement…</p></div>
+    <div class="notice" id="phone" hidden></div>
     <footer id="footer"></footer>
   </main>
   <script src="home.js"></script>

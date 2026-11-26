@@ -12,6 +12,7 @@ function el(tag, attrs = {}, text) {
 }
 
 const fmtDate = (iso) => (iso ? new Date(iso).toLocaleString("fr-FR") : "—");
+const fmtDay = (iso) => (iso ? new Date(iso).toLocaleDateString("fr-FR", { dateStyle: "long", timeZone: "UTC" }) : "—");
 const short = (a) => (a ? `${a.slice(0, 7)}…${a.slice(-5)}` : "—");
 
 function tag(ok, yes, no, na) {
@@ -60,15 +61,15 @@ function renderStatus(v) {
   dl.lastChild.append(tag(issuerOk, "fédération reconnue", "émetteur inconnu"));
   row(dl, "Acceptée par le sportif", tag(v.reason === "absente ou révoquée" ? null : v.accepted, "oui", "non", "—"));
   row(dl, "Expirée", tag(v.reason === "absente ou révoquée" ? null : !v.expired, "non", "oui", "—"));
-  row(dl, "Valable jusqu'au", el("span", {}, fmtDate(v.expiresAt)));
+  row(dl, "Valable jusqu'au", el("span", {}, fmtDay(v.expiresAt)));
   row(dl, "Photo (empreinte SHA-256)", tag(v.photoHashOk, "conforme", "NON conforme", "non contrôlée"));
   row(dl, "Dernier contrôle", el("span", {}, fmtDate(v.checkedAt)));
 }
 
 const ACTIONS = {
-  CredentialCreate: "émis",
-  CredentialAccept: "accepté par le sportif",
-  CredentialDelete: "supprimé (révoqué)",
+  CredentialCreate: ["émis", "émise"],
+  CredentialAccept: ["accepté par le sportif", "acceptée par le sportif"],
+  CredentialDelete: ["supprimé (révoqué)", "supprimée (révoquée)"],
 };
 const NAMES = { CLUB_MEMBER: "Adhésion au club", LICENCE_2026: "Licence 2026" };
 
@@ -80,7 +81,7 @@ function renderHistory(events) {
     const li = el("li");
     const who = e.issuer === federation ? "fédération" : `club ${short(e.issuer)}`;
     li.append(
-      el("strong", {}, `${NAMES[e.type] || e.type} ${ACTIONS[e.action] || e.action}`),
+      el("strong", {}, `${NAMES[e.type] || e.type} ${(ACTIONS[e.action] || [e.action, e.action])[e.type === "LICENCE_2026" ? 1 : 0]}`),
       el("span", { class: "muted" }, ` · ${who} · ${fmtDate(e.date)}${e.memo ? " · " + e.memo : ""} · `),
       el("a", { href: e.link, target: "_blank", rel: "noopener" }, "voir dans l'explorateur")
     );
@@ -90,11 +91,12 @@ function renderHistory(events) {
 
 async function refresh() {
   try {
-    const [v, h] = await Promise.all([
-      fetch(`/api/verify/${subject}`).then((r) => (r.ok ? r.json() : Promise.reject(r))),
+    const [p, h] = await Promise.all([
+      fetch(`/api/pipeline/${subject}`).then((r) => (r.ok ? r.json() : Promise.reject(r))),
       fetch(`/api/history/${subject}`).then((r) => (r.ok ? r.json() : [])),
     ]);
-    renderStatus(v);
+    renderStatus(p.licence);
+    renderPipeline(document.getElementById("pipeline"), p);
     renderHistory(h);
   } catch {
     const box = document.getElementById("status");

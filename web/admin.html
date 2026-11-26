@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestion - LicenSport</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav><a href="/">Accueil</a><a href="/course.html">Contrôle de course</a><a href="/admin.html">Gestion</a></nav>
+    <a href="/">LicenSport</a><small>gestion de démonstration</small>
+  </header>
+  <main>
+    <div id="disabled" class="notice" hidden>Mode admin désactivé. Arrêtez le serveur et lancez <strong>npm run admin</strong>.</div>
+
+    <div class="card">
+      <label for="athlete"><strong>Sportif</strong></label>
+      <select id="athlete"></select>
+      <a id="verifyLink" class="btn" href="#" target="_blank" rel="noopener">Ouvrir la page de vérification</a>
+      <dl id="state"></dl>
+    </div>
+
+    <h2>Parcours de la licence</h2>
+    <div id="pipeline"></div>
+
+    <h2>Club</h2>
+    <div class="card actions">
+      <select id="club"><option value="clubA">Club A</option><option value="clubB">Club B</option></select>
+      <button id="btnIssueMembership">Valider l'adhésion</button>
+      <button id="btnRevokeMembership" class="danger">Révoquer l'adhésion (départ)</button>
+    </div>
+
+    <h2>Fédération</h2>
+    <div class="card actions">
+      <button id="btnIssueLicence">Émettre la licence</button>
+      <select id="motif">
+        <option value="SUSP_DISCIPLINE">Motif : disciplinaire</option>
+        <option value="SUSP_ADMINISTRATIVE">Motif : administratif</option>
+      </select>
+      <button id="btnSuspend" class="danger">Suspendre la licence</button>
+    </div>
+
+    <h2>Sportif</h2>
+    <div class="card actions">
+      <button id="btnAcceptMembership">Accepter l'adhésion du club sélectionné</button>
+      <button id="btnAcceptLicence">Accepter la licence</button>
+    </div>
+
+    <h2>Journal</h2>
+    <div class="card"><ul class="timeline" id="log"><li class="muted">Aucune action pour l'instant.</li></ul></div>
+    <footer>Les clés restent sur le serveur : le navigateur n'envoie que des noms de rôles. Chaque action est une vraie transaction Testnet (3 à 5 s).</footer>
+  </main>
+  <script src="pipeline.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
