@@ -1,0 +1,24 @@
+{
+  "name": "licensport",
+  "version": "1.0.0",
+  "description": "[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/XRPL-Commons/dev-training-june-2026?geo=EuropeWest)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vianneydemaximy/LicenSport.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/vianneydemaximy/LicenSport/issues"
+  },
+  "homepage": "https://github.com/vianneydemaximy/LicenSport#readme",
+  "dependencies": {
+    "xrpl": "^5.3.0"
+  }
+}
