@@ -7,7 +7,7 @@
 const xrpl = require("xrpl");
 const { TESTNET_URL, CREDENTIAL_TYPES, SEASON_END_ISO, loadWallets } = require("../lib/config");
 const { issue, accept, revoke, getCredential, verify, history } = require("../lib/credentials");
-const { manifestHash } = require("../lib/hash");
+const { recordForRole } = require("../lib/offchain");
 
 const { CLUB_MEMBER, LICENCE } = CREDENTIAL_TYPES;
 const SEASON = "2026-2027";
@@ -50,8 +50,8 @@ async function main() {
       throw new Error("Adhésion absente ou club non affilié : pas de licence.");
     }
     console.log("  adhésion vérifiée par la fédération : OK");
-    // Les empreintes remplacent ici la photo et le dossier réels (stockés hors chaîne).
-    const uri = manifestHash({ photo: "empreinte-photo-athlete1", dossier: "dossier-complet" });
+    // Empreinte de la vraie photo + du dossier (hors chaîne) : seule elle va dans l'URI.
+    const uri = recordForRole("athlete1").uri;
     show("La fédération émet la licence", await issue(client, w.federation, w.athlete1.address, LICENCE, {
       expiration: SEASON_END_ISO, uri, memo: `licence ${SEASON}`,
     }));
